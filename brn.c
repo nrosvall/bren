@@ -30,13 +30,18 @@
 #include <unistd.h>
 #include <string.h>
 #include <ftw.h>
+#include <time.h>
 
 #define VERSION "0.4"
 
 typedef enum {
+	/* append (n) to the basename. Eg. myphoto(1).jpg */
 	DEFAULT = 1,
+	/* use original filename as identifier */
 	ORIGINAL,
+	/* generate 8 chars long random identifier */
 	RANDOM,
+	/* take sha256 from the file and use it as the name */
 	SHA256
 	
 } Identifier_t;
@@ -84,25 +89,42 @@ static bool is_dir(const char *path) {
 	return S_ISDIR(st.st_mode);
 }
 
+static void set_default_basename() {
+
+	time_t rawtime;
+	struct tm *time_info;
+	char strdate[11];
+
+	time( &rawtime );
+	time_info = localtime( &rawtime );
+
+	strftime(strdate,11,"%Y-%m-%d", time_info);
+}
+
+static bool rename_file(const char *filepath) {
+
+	switch(_identifier) {
+		case DEFAULT:
+			break;
+		case ORIGINAL:
+			break;
+		case RANDOM:
+			break;
+		case SHA256:
+			break;
+	}
+	
+	return true;
+}
+
 static int do_work(const char *filepath, const struct stat *st,
 					int tflag, struct FTW *ftwbuffer) {
 
 	if (tflag == FTW_F) {
-		if (access(filepath, F_OK) == -1) {
+		if (access(filepath, F_OK) == -1)
 			fprintf(stderr, "%s does not exist, skipping...\n", filepath);
-		}
-		else {
-			switch(_identifier) {
-				case DEFAULT:
-					break;
-				case ORIGINAL:
-					break;
-				case RANDOM:
-					break;
-				case SHA256:
-					break;
-			}
-		}
+		else
+			rename_file(filepath);
 	}
 	
 	return 0;						
@@ -133,6 +155,8 @@ int main (int argc, char *argv[]) {
 		usage();
 		return 0;
 	}
+
+	//TODO: Set default _basename to be date
 
 	while (optind < argc) {
 		if ((c = getopt(argc, argv, "b:horsV")) != -1) {
