@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <ftw.h>
@@ -73,11 +74,35 @@ AUTHORS\n\
 	printf(HELP);
 }
 
+static bool is_dir(const char *path) {
+
+	struct stat st;
+
+	if (stat(path, &st) < 0)
+		return -1;
+
+	return S_ISDIR(st.st_mode);
+}
+
 static int do_work(const char *filepath, const struct stat *st,
 					int tflag, struct FTW *ftwbuffer) {
 
 	if (tflag == FTW_F) {
-		printf("basename: %s\n", _basename);	
+		if (access(filepath, F_OK) == -1) {
+			fprintf(stderr, "%s does not exist, skipping...\n", filepath);
+		}
+		else {
+			switch(_identifier) {
+				case DEFAULT:
+					break;
+				case ORIGINAL:
+					break;
+				case RANDOM:
+					break;
+				case SHA256:
+					break;
+			}
+		}
 	}
 	
 	return 0;						
@@ -159,6 +184,12 @@ int main (int argc, char *argv[]) {
 		}
 		else {
 			path = argv[1];
+
+			if (!is_dir(path)) {
+				fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
+				return 0;
+			}
+			
 			optind++;
 		}
 	}
