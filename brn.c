@@ -40,6 +40,10 @@ typedef enum {
 	
 } Identifier_t;
 
+
+static Identifier_t _identifier = DEFAULT;
+static char *_basename = NULL;
+
 static void usage()
 {
 #define HELP "\
@@ -73,14 +77,14 @@ static int do_work(const char *filepath, const struct stat *st,
 					int tflag, struct FTW *ftwbuffer) {
 
 	if (tflag == FTW_F) {
-		printf("%s\n", filepath);
+		printf("basename: %s\n", _basename);	
 	}
 	
 	return 0;						
 }
 
-static void walk_path(const char *path, Identifier_t identifier,
-						 int fd_limit) {
+static void walk_path(const char *path, int fd_limit) {
+
 	int fflags = 0;
 
 	fflags |= FTW_DEPTH;
@@ -94,11 +98,8 @@ static void walk_path(const char *path, Identifier_t identifier,
 
 int main (int argc, char *argv[]) {
 
-	int index;
 	int c;
-	char *basename = NULL;
 	char *path = NULL;
-	Identifier_t identifier = DEFAULT;
 	
 	int iflag_set = 0;
 
@@ -108,46 +109,61 @@ int main (int argc, char *argv[]) {
 		return 0;
 	}
 
-	path = argv[1];
-
-	while ((c = getopt(argc, argv, "b:horsV")) != -1) {
-		switch (c) {
-			case 'b': //basename
-				break;
-			case 'h':
-				usage();
-				break;
-			case 'o': //use original name as id
-				if (iflag_set == 0) {
-					identifier = ORIGINAL;
-					iflag_set = 1;
-				}
-				break;
-			case 'r': //use generate random id (8 chars)
-				if (iflag_set == 0) {
-					identifier = RANDOM;
-					iflag_set = 1;
-				}
-				break;
-			case 's': //use sha 256 as the new name, ignore b
-				if (iflag_set == 0) {
-					identifier = SHA256;
-					iflag_set = 1;
-				}
-				break;
-			case 'V':
-				printf("brn version %s\n", VERSION);
-				return 0;
-			case '?':
-				usage();
-				return 0;
+	while (optind < argc) {
+		if ((c = getopt(argc, argv, "b:horsV")) != -1) {
+			switch (c) {
+				case 'b': //basename
+					_basename = optarg;			
+					break;
+				case 'h':
+					usage();
+					return 0;
+					break;
+				case 'o': //use original name as id
+					if (iflag_set == 0) {
+						_identifier = ORIGINAL;
+						iflag_set = 1;
+						printf("set o\n");
+					}
+					else {
+						fprintf(stderr, "Another flag already set, ignoring -o\n");
+					}
+					break;
+				case 'r': //use generate random id (8 chars)
+					if (iflag_set == 0) {
+						_identifier = RANDOM;
+						iflag_set = 1;
+						printf("set r\n");
+					}
+					else {
+						fprintf(stderr, "Another flag already set, ignoring -r\n");
+					}
+					break;
+				case 's': //use sha 256 as the new name, ignore b
+					if (iflag_set == 0) {
+						_identifier = SHA256;
+						iflag_set = 1;
+						printf("set s\n");
+					}
+					else {
+						fprintf(stderr, "Another flag already set, ignoring -s\n");
+					}
+					break;
+				case 'V':
+					printf("brn version %s\n", VERSION);
+					return 0;
+				case '?':
+					usage();
+					return 0;
+			}
+		}
+		else {
+			path = argv[1];
+			optind++;
 		}
 	}
 
-	/*for (index = optind; index < argc; index++)
-		printf ("Non-option argument %s\n", argv[index]); */
-
-	walk_path(path, identifier, 15);
+	walk_path(path, 15);
 
 	return 0;
 }
