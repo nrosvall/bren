@@ -1,4 +1,4 @@
-/* brn is a batch rename tool for the shell.
+/* brn is a bulk rename program for the shell.
  *
  * Copyright (C) 2023 Niko Rosvall <niko@byteptr.com>
  *
@@ -89,18 +89,6 @@ static bool is_dir(const char *path) {
 	return S_ISDIR(st.st_mode);
 }
 
-static void set_default_basename() {
-
-	time_t rawtime;
-	struct tm *time_info;
-	char strdate[11];
-
-	time( &rawtime );
-	time_info = localtime( &rawtime );
-
-	strftime(strdate,11,"%Y-%m-%d", time_info);
-}
-
 static bool rename_file(const char *filepath) {
 
 	switch(_identifier) {
@@ -155,9 +143,7 @@ int main (int argc, char *argv[]) {
 		usage();
 		return 0;
 	}
-
-	//TODO: Set default _basename to be date
-
+	
 	while (optind < argc) {
 		if ((c = getopt(argc, argv, "b:horsV")) != -1) {
 			switch (c) {
@@ -218,7 +204,10 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-	walk_path(path, 15);
+	if (_basename == NULL)
+		fprintf(stderr, "You must set the basename (-b) for the files.\n");
+	else
+		walk_path(path, 15);
 
 	return 0;
 }
