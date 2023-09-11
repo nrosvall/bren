@@ -32,6 +32,7 @@
 #include <ftw.h>
 #include <time.h>
 #include <libgen.h>
+#include <limits.h>
 
 #define VERSION "0.4"
 
@@ -98,19 +99,56 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 	char *filepath_copy;
 	char *basepath;
 	char *newpath = NULL;
+	const char *ext;
 	int basepathlen;
-	int extlen;
+	int extlen = 0;
 	int newnamepartlen;
-	
+	char sep[2];
+	char dot[2];
+	size_t newpathlen;
+
+	/* As we use strcat with these, they must be strings */
+	sep[0] = '/';
+	dot[0] = '.';
+	sep[1] = '\0';
+	dot[1] = '\0';
+
 	filepath_copy = strdup(origpath);
 	basepath = dirname(filepath_copy);
+	ext = strrchr(origpath, '.');
 
-	//TODO: We need basepath + / + newname + ext
-	/* +2 to include trailing zero and / */
+	if (!ext || ext == origpath)
+		ext = NULL;
+	else
+		ext = ext + 1;
+	
 	basepathlen = strlen(basepath) + 2;
 	newnamepartlen = strlen(newnamepart);
+
+	if (ext != NULL)
+		extlen = strlen(ext);
+
+	/* +1 for the dot (eg. .png) */
+	newpathlen = (basepathlen + newnamepartlen + extlen + 1) * sizeof(char);
 	
-	newpath = malloc((basepathlen + newnamepartlen + extlen) * sizeof(char));
+	newpath = malloc(newpathlen);
+
+	if (newpath == NULL) {
+		free(filepath_copy);
+		fprintf(stderr, "Malloc failed. Abort.\n");
+		exit(EXIT_FAILURE);
+	}
+	
+	strcpy(newpath, basepath);
+	strcat(newpath, sep);
+	strcat(newpath, newnamepart);
+
+	if (ext != NULL) {
+		strcat(newpath, dot);
+		strcat(newpath, ext);
+	}
+
+	free(filepath_copy);
 	
 	return newpath;
 }
@@ -130,7 +168,7 @@ static bool random_identifier(const char *filepath) {
 		exit(EXIT_FAILURE);
 	}
 
-	strncpy(newnamepart, _UserData.basename, sizeof(newnamepart) - 1);
+	strcpy(newnamepart, _UserData.basename);
 
 	for (int n = 0; n < 8; n++) {
 		char c;
@@ -141,12 +179,13 @@ static bool random_identifier(const char *filepath) {
 	}
 
 	newpath = construct_new_filename(filepath, newnamepart);
-		
+	printf("newpath: %s\n", newpath);
 	/*if (rename(filepath, newpath) == -1) {
 		perror("random_identifier");
 		retval = false;
 	}*/
 
+	free(newpath);
 	free(newnamepart);
 	
 	return retval;
