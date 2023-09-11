@@ -31,6 +31,7 @@
 #include <string.h>
 #include <ftw.h>
 #include <time.h>
+#include <libgen.h>
 
 #define VERSION "0.4"
 
@@ -46,9 +47,10 @@ typedef enum {
 	
 } Identifier_t;
 
-
-static Identifier_t _identifier = DEFAULT;
-static char *_basename = NULL;
+typedef struct {
+	Identifier_t identifier;
+	char *basename;
+} UserData_t;
 
 static void usage()
 {
@@ -79,6 +81,8 @@ AUTHORS\n\
 	printf(HELP);
 }
 
+UserData_t _UserData;
+
 static bool is_dir(const char *path) {
 
 	struct stat st;
@@ -89,30 +93,95 @@ static bool is_dir(const char *path) {
 	return S_ISDIR(st.st_mode);
 }
 
-static bool rename_file(const char *filepath) {
+static char *construct_new_filename(const char *origpath, const char *newnamepart) {
 
-	switch(_identifier) {
+	char *filepath_copy;
+	char *basepath;
+	char *newpath = NULL;
+	int basepathlen;
+	int extlen;
+	int newnamepartlen;
+	
+	filepath_copy = strdup(origpath);
+	basepath = dirname(filepath_copy);
+
+	//TODO: We need basepath + / + newname + ext
+	/* +2 to include trailing zero and / */
+	basepathlen = strlen(basepath) + 2;
+	newnamepartlen = strlen(newnamepart);
+	
+	newpath = malloc((basepathlen + newnamepartlen + extlen) * sizeof(char));
+	
+	return newpath;
+}
+
+static bool random_identifier(const char *filepath) {
+
+	bool retval = true;
+	char *newnamepart = NULL;
+	const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const size_t chars_size = sizeof(chars) - 1;
+	char *newpath = NULL;
+
+	newnamepart = malloc((strlen(_UserData.basename) + 9) * sizeof(char));
+
+	if (newnamepart == NULL) {
+		fprintf(stderr, "Malloc failed. Abort.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	strncpy(newnamepart, _UserData.basename, sizeof(newnamepart) - 1);
+
+	for (int n = 0; n < 8; n++) {
+		char c;
+		int index = rand() % chars_size;
+
+		c = chars[index];
+		strncat(newnamepart, &c, 1);
+	}
+
+	newpath = construct_new_filename(filepath, newnamepart);
+		
+	/*if (rename(filepath, newpath) == -1) {
+		perror("random_identifier");
+		retval = false;
+	}*/
+
+	free(newnamepart);
+	
+	return retval;
+}
+
+static bool select_identifier(const char *filepath) {
+
+	bool retval = false;
+
+	switch(_UserData.identifier) {
 		case DEFAULT:
 			break;
 		case ORIGINAL:
 			break;
 		case RANDOM:
+			retval = random_identifier(filepath);
 			break;
 		case SHA256:
 			break;
 	}
 	
-	return true;
+	return retval;
 }
 
-static int do_work(const char *filepath, const struct stat *st,
+static int nftw_cb(const char *filepath, const struct stat *st,
 					int tflag, struct FTW *ftwbuffer) {
 
 	if (tflag == FTW_F) {
-		if (access(filepath, F_OK) == -1)
+		if (access(filepath, F_OK) == -1) {
 			fprintf(stderr, "%s does not exist, skipping...\n", filepath);
-		else
-			rename_file(filepath);
+		}
+		else {
+			if (!select_identifier(filepath))
+				fprintf(stderr, "Renaming %s failed\n", filepath);
+		}
 	}
 	
 	return 0;						
@@ -125,7 +194,7 @@ static void walk_path(const char *path, int fd_limit) {
 	fflags |= FTW_DEPTH;
 	fflags |= FTW_PHYS;
 	
-	if (nftw(path, do_work, fd_limit, fflags) == -1) {
+	if (nftw(path, nftw_cb, fd_limit, fflags) == -1) {
 		perror("nftw");
 		exit(EXIT_FAILURE);
 	}
@@ -148,7 +217,7 @@ int main (int argc, char *argv[]) {
 		if ((c = getopt(argc, argv, "b:horsV")) != -1) {
 			switch (c) {
 				case 'b': //basename
-					_basename = optarg;			
+					_UserData.basename = optarg;			
 					break;
 				case 'h':
 					usage();
@@ -156,7 +225,7 @@ int main (int argc, char *argv[]) {
 					break;
 				case 'o': //use original name as id
 					if (iflag_set == 0) {
-						_identifier = ORIGINAL;
+						_UserData.identifier = ORIGINAL;
 						iflag_set = 1;
 						printf("set o\n");
 					}
@@ -166,9 +235,9 @@ int main (int argc, char *argv[]) {
 					break;
 				case 'r': //use generate random id (8 chars)
 					if (iflag_set == 0) {
-						_identifier = RANDOM;
+						srand(time(NULL));
+						_UserData.identifier = RANDOM;
 						iflag_set = 1;
-						printf("set r\n");
 					}
 					else {
 						fprintf(stderr, "Another flag already set, ignoring -r\n");
@@ -176,7 +245,7 @@ int main (int argc, char *argv[]) {
 					break;
 				case 's': //use sha 256 as the new name, ignore b
 					if (iflag_set == 0) {
-						_identifier = SHA256;
+						_UserData.identifier = SHA256;
 						iflag_set = 1;
 						printf("set s\n");
 					}
@@ -204,7 +273,7 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-	if (_basename == NULL)
+	if (_UserData.basename == NULL)
 		fprintf(stderr, "You must set the basename (-b) for the files.\n");
 	else
 		walk_path(path, 15);
