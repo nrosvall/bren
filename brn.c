@@ -179,11 +179,11 @@ static bool random_identifier(const char *filepath) {
 	}
 
 	newpath = construct_new_filename(filepath, newnamepart);
-	printf("newpath: %s\n", newpath);
-	/*if (rename(filepath, newpath) == -1) {
+	
+	if (rename(filepath, newpath) == -1) {
 		perror("random_identifier");
 		retval = false;
-	}*/
+	}
 
 	free(newpath);
 	free(newnamepart);
