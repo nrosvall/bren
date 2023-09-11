@@ -139,13 +139,13 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 		exit(EXIT_FAILURE);
 	}
 	
-	strcpy(newpath, basepath);
-	strcat(newpath, sep);
-	strcat(newpath, newnamepart);
+	strncpy(newpath, basepath, strlen(basepath) + 1);
+	strncat(newpath, sep, strlen(sep) + 1);
+	strncat(newpath, newnamepart, strlen(newnamepart) + 1);
 
 	if (ext != NULL) {
-		strcat(newpath, dot);
-		strcat(newpath, ext);
+		strncat(newpath, dot, strlen(dot)+1);
+		strncat(newpath, ext, strlen(ext)+1);
 	}
 
 	free(filepath_copy);
@@ -168,7 +168,7 @@ static bool random_identifier(const char *filepath) {
 		exit(EXIT_FAILURE);
 	}
 
-	strcpy(newnamepart, _UserData.basename);
+	strncpy(newnamepart, _UserData.basename, strlen(_UserData.basename) + 1);
 
 	for (int n = 0; n < 8; n++) {
 		char c;
