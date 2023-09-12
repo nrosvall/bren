@@ -51,6 +51,7 @@ typedef enum {
 typedef struct {
 	Identifier_t identifier;
 	char *basename;
+	bool remove_ext;
 } UserData_t;
 
 static void usage()
@@ -64,6 +65,7 @@ OPTIONS\n\
 \n\
     -b <name>          Set basename for the files\n\
     -o                 Use original filename as an identifier\n\
+    -e                 Remove extension from the files\n\
     -r                 Generate random, 8 characters long identifier\n\
     -s                 Use SHA256 of the file as a new name. Ignores -b\n\
 \n\
@@ -143,7 +145,7 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 	strncat(newpath, sep, strlen(sep) + 1);
 	strncat(newpath, newnamepart, strlen(newnamepart) + 1);
 
-	if (ext != NULL) {
+	if (ext != NULL && !_UserData.remove_ext) {
 		strncat(newpath, dot, strlen(dot)+1);
 		strncat(newpath, ext, strlen(ext)+1);
 	}
@@ -251,13 +253,19 @@ int main (int argc, char *argv[]) {
 		usage();
 		return 0;
 	}
+
+	_UserData.remove_ext = false;
+	_UserData.identifier = DEFAULT;
 	
 	while (optind < argc) {
-		if ((c = getopt(argc, argv, "b:horsV")) != -1) {
+		if ((c = getopt(argc, argv, "b:ehorsV")) != -1) {
 			switch (c) {
 				case 'b': //basename
 					_UserData.basename = optarg;			
 					break;
+				case 'e':
+					_UserData.remove_ext = true;
+					break;	
 				case 'h':
 					usage();
 					return 0;
