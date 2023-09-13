@@ -2,7 +2,7 @@ DESTDIR   ?=
 PREFIX    ?= /usr/local
 MANPREFIX ?= $(PREFIX)/man
 
-CFLAGS += -std=c99 -Wall
+CFLAGS += -std=c99 -Wall -lm
 
 all: brn
 
