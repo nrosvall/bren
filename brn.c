@@ -32,20 +32,17 @@
 #include <ftw.h>
 #include <time.h>
 #include <libgen.h>
-#include <limits.h>
+#include <math.h>
 
 #define VERSION "0.4"
 
 typedef enum {
 	/* append (n) to the basename. Eg. myphoto(1).jpg */
 	DEFAULT = 1,
-	/* use original filename as identifier */
-	ORIGINAL,
+	/* change the first letter of the files to uppercase */
+	UPPER,
 	/* generate 8 chars long random identifier */
-	RANDOM,
-	/* take sha256 from the file and use it as the name */
-	SHA256
-	
+	RANDOM	
 } Identifier_t;
 
 typedef struct {
@@ -53,6 +50,7 @@ typedef struct {
 	char *basename;
 	bool remove_ext;
 	size_t file_count;
+	bool top_dir_only;
 } data_t;
 
 static void usage()
@@ -65,10 +63,11 @@ SYNOPSIS\n\
 OPTIONS\n\
 \n\
     -b <name>          Set basename for the files\n\
-    -o                 Use original filename as an identifier\n\
+    -c <path>          Execute script pointed by path\n\
     -e                 Remove extension from the files\n\
     -r                 Generate random, 8 characters long identifier\n\
-    -s                 Use SHA256 of the file as a new name. Ignores -b\n\
+    -t                 Do not traverse into subdirectories of the path\n\
+    -C                 Change first letter of the filename to upper case\n\
 \n\
     -h                 Show short help and exit. This page\n\
     -V                 Show version number of the program\n\
@@ -165,8 +164,50 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 static bool identifier_count(const char *filepath) {
 
 	bool retval = true;
+	char *newnamepart = NULL;
+	char *newpath = NULL;
+	size_t length;
+	char pa = '(';
+	char pe = ')';
+	char *ctmp = NULL;
+	
+	/* count the digits in the file_count */
+	length = (_data_t.file_count == 0) ? 1 : log10(_data_t.file_count) + 1;
+	/* +3 for ( and ) and the trailing zero */
+	newnamepart = malloc((strlen(_data_t.basename) + length + 3) *sizeof(char));
 
+	if (newnamepart == NULL) {
+		fprintf(stderr, "Malloc failed. Abort.\n");
+		exit(EXIT_FAILURE);
+	}
 
+	strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
+	strncat(newnamepart, &pa, 1);
+
+	ctmp = malloc(length + 1);
+
+	if (ctmp == NULL) {
+		free(newnamepart);
+		fprintf(stderr, "Malloc failed. Abort.\n");
+		exit(EXIT_FAILURE);
+	}
+	
+	snprintf(ctmp, length + 1, "%zu", _data_t.file_count);
+	
+	strncat(newnamepart, ctmp, strlen(ctmp));
+	strncat(newnamepart, &pe, 1);
+
+	newpath = construct_new_filename(filepath, newnamepart);
+
+	if (rename(filepath, newpath) == -1) {
+		perror("identifier_count");
+		return false;
+	}
+
+	free(newpath);
+	free(newnamepart);
+	free(ctmp);
+	
 	return retval;
 }
 
@@ -203,7 +244,7 @@ static bool identifier_random(const char *filepath) {
 	newpath = construct_new_filename(filepath, newnamepart);
 	
 	if (rename(filepath, newpath) == -1) {
-		perror("random_identifier");
+		perror("identifier_random");
 		retval = false;
 	}
 
@@ -221,12 +262,10 @@ static bool select_identifier(const char *filepath) {
 		case DEFAULT:
 			retval = identifier_count(filepath);
 			break;
-		case ORIGINAL:
+		case UPPER:
 			break;
 		case RANDOM:
 			retval = identifier_random(filepath);
-			break;
-		case SHA256:
 			break;
 	}
 	
@@ -279,12 +318,15 @@ int main (int argc, char *argv[]) {
 	_data_t.remove_ext = false;
 	_data_t.identifier = DEFAULT;
 	_data_t.file_count = 0;
+	_data_t.top_dir_only = false;
 	
 	while (optind < argc) {
-		if ((c = getopt(argc, argv, "b:ehorsV")) != -1) {
+		if ((c = getopt(argc, argv, "b:c:ehortCV")) != -1) {
 			switch (c) {
 				case 'b': //basename
 					_data_t.basename = optarg;			
+					break;
+				case 'c': /* Execute script point by optarg */
 					break;
 				case 'e':
 					_data_t.remove_ext = true;
@@ -293,17 +335,7 @@ int main (int argc, char *argv[]) {
 					usage();
 					return 0;
 					break;
-				case 'o': //use original name as id
-					if (iflag_set == 0) {
-						_data_t.identifier = ORIGINAL;
-						iflag_set = 1;
-						printf("set o\n");
-					}
-					else {
-						fprintf(stderr, "Another flag already set, ignoring -o\n");
-					}
-					break;
-				case 'r': //use generate random id (8 chars)
+				case 'r': /* Append filenames with 8 random characters */
 					if (iflag_set == 0) {
 						srand(time(NULL));
 						_data_t.identifier = RANDOM;
@@ -313,14 +345,16 @@ int main (int argc, char *argv[]) {
 						fprintf(stderr, "Another flag already set, ignoring -r\n");
 					}
 					break;
-				case 's': //use sha 256 as the new name, ignore b
+				case 't': /* Do not traverse into the subdirectories of the path */
+					_data_t.top_dir_only = true;
+					break;
+				case 'C': /* Change the first letter of the filename to upper case */
 					if (iflag_set == 0) {
-						_data_t.identifier = SHA256;
+						_data_t.identifier = UPPER;
 						iflag_set = 1;
-						printf("set s\n");
 					}
 					else {
-						fprintf(stderr, "Another flag already set, ignoring -s\n");
+						fprintf(stderr, "Another flag already set, ignoring -C\n");
 					}
 					break;
 				case 'V':
