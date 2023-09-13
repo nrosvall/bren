@@ -51,6 +51,8 @@ typedef struct {
 	bool remove_ext;
 	size_t file_count;
 	bool top_dir_only;
+	bool execute_script;
+	char *script_file_path;
 } data_t;
 
 static void usage()
@@ -63,11 +65,11 @@ SYNOPSIS\n\
 OPTIONS\n\
 \n\
     -b <name>          Set basename for the files\n\
-    -c <path>          Execute script pointed by path\n\
+    -c <path>          After renaming, execute script for each file\n\
     -e                 Remove extension from the files\n\
     -r                 Generate random, 8 characters long identifier\n\
     -t                 Do not traverse into subdirectories of the path\n\
-    -C                 Change first letter of the filename to upper case\n\
+    -C                 Change first letter of the original filename to upper case\n\
 \n\
     -h                 Show short help and exit. This page\n\
     -V                 Show version number of the program\n\
@@ -153,6 +155,14 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 	free(filepath_copy);
 	
 	return newpath;
+}
+
+static bool identifier_upper(const char *filepath) {
+
+	bool retval = true;
+	//TODO: remember that this one might not have the basename, but it might be set too
+
+	return retval;
 }
 
 /* Implements the default behaviour of Brn.
@@ -263,6 +273,7 @@ static bool select_identifier(const char *filepath) {
 			retval = identifier_count(filepath);
 			break;
 		case UPPER:
+			retval = identifier_upper(filepath);
 			break;
 		case RANDOM:
 			retval = identifier_random(filepath);
@@ -306,7 +317,7 @@ int main (int argc, char *argv[]) {
 
 	int c;
 	char *path = NULL;
-	
+	bool need_basename = true;
 	int iflag_set = 0;
 
 	if (argc == 1) {
@@ -319,6 +330,8 @@ int main (int argc, char *argv[]) {
 	_data_t.identifier = DEFAULT;
 	_data_t.file_count = 0;
 	_data_t.top_dir_only = false;
+	_data_t.execute_script = false;
+	_data_t.script_file_path = NULL;
 	
 	while (optind < argc) {
 		if ((c = getopt(argc, argv, "b:c:ehortCV")) != -1) {
@@ -326,7 +339,9 @@ int main (int argc, char *argv[]) {
 				case 'b': //basename
 					_data_t.basename = optarg;			
 					break;
-				case 'c': /* Execute script point by optarg */
+				case 'c': /* Execute script point by optarg for each file */
+					_data_t.execute_script = true;
+					_data_t.script_file_path = optarg;
 					break;
 				case 'e':
 					_data_t.remove_ext = true;
@@ -377,7 +392,7 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-	if (_data_t.basename == NULL)
+	if (_data_t.basename == NULL && _data_t.identifier != UPPER)
 		fprintf(stderr, "You must set the basename (-b) for the files.\n");
 	else
 		walk_path(path, 15);
