@@ -39,8 +39,8 @@
 typedef enum {
 	/* append (n) to the basename. Eg. myphoto(1).jpg */
 	DEFAULT = 1,
-	/* change the first letter of the files to uppercase */
-	UPPER,
+	/* use last modified date of the file as an identifier */
+	FILE_DATE,
 	/* generate 8 chars long random identifier */
 	RANDOM	
 } Identifier_t;
@@ -69,7 +69,7 @@ OPTIONS\n\
     -e                 Remove extension from the files\n\
     -r                 Generate random, 8 characters long identifier\n\
     -t                 Do not traverse into subdirectories of the path\n\
-    -C                 Change first letter of the original filename to upper case\n\
+    -d                 Use last modified date of the file as an identifier\n\
 \n\
     -h                 Show short help and exit. This page\n\
     -V                 Show version number of the program\n\
@@ -153,15 +153,59 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 	}
 
 	free(filepath_copy);
-	
+	//TODO: check if file exist, if yes, return nullptr
 	return newpath;
 }
 
-static bool identifier_upper(const char *filepath) {
+/* Uses last modified date of the file as an identifier */
+static bool identifier_file_date(const char *filepath) {
 
 	bool retval = true;
-	//TODO: remember that this one might not have the basename, but it might be set too
+	char *newnamepart= NULL;
+	char *newpath = NULL;
+	char date[20];
+	struct stat attributes;
+	struct tm *ltime= NULL;
+	
+	/* +11 for the date (format: 2023-09-14T13:24:59) and for the trailing zero */
+	newnamepart = malloc((strlen(_data_t.basename) + 20 ) * sizeof(char));
 
+	if (newnamepart == NULL) {
+		fprintf(stderr, "Malloc failed. Abort.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
+
+	if (stat(filepath, &attributes) == -1) {
+		perror("identifier_file_date");
+		free(newnamepart);
+		return false;	
+	}
+
+	ltime = localtime(&(attributes.st_mtime));
+
+	if (ltime == NULL) {
+		free(newnamepart);
+		perror("identifier_file_date");
+		return false;
+	}
+
+	strftime(date, 20, "%Y-%m-%dT%H:%M:%S", ltime);
+	strncat(newnamepart, date, strlen(date));
+
+	newpath = construct_new_filename(filepath, newnamepart);
+
+	if (rename(filepath, newpath) == -1) {
+		perror("identifier_file_date");
+		free(newpath);
+		free(newnamepart);
+		return false;
+	}
+
+	free(newpath);
+	free(newnamepart);
+	
 	return retval;
 }
 
@@ -211,6 +255,10 @@ static bool identifier_count(const char *filepath) {
 
 	if (rename(filepath, newpath) == -1) {
 		perror("identifier_count");
+		free(newpath);
+		free(newnamepart);
+		free(ctmp);
+
 		return false;
 	}
 
@@ -272,8 +320,8 @@ static bool select_identifier(const char *filepath) {
 		case DEFAULT:
 			retval = identifier_count(filepath);
 			break;
-		case UPPER:
-			retval = identifier_upper(filepath);
+		case FILE_DATE:
+			retval = identifier_file_date(filepath);
 			break;
 		case RANDOM:
 			retval = identifier_random(filepath);
@@ -316,8 +364,7 @@ static void walk_path(const char *path, int fd_limit) {
 int main (int argc, char *argv[]) {
 
 	int c;
-	char *path = NULL;
-	bool need_basename = true;
+	char *path = NULL;	
 	int iflag_set = 0;
 
 	if (argc == 1) {
@@ -334,7 +381,7 @@ int main (int argc, char *argv[]) {
 	_data_t.script_file_path = NULL;
 	
 	while (optind < argc) {
-		if ((c = getopt(argc, argv, "b:c:ehortCV")) != -1) {
+		if ((c = getopt(argc, argv, "b:c:ehortdV")) != -1) {
 			switch (c) {
 				case 'b': //basename
 					_data_t.basename = optarg;			
@@ -363,9 +410,9 @@ int main (int argc, char *argv[]) {
 				case 't': /* Do not traverse into the subdirectories of the path */
 					_data_t.top_dir_only = true;
 					break;
-				case 'C': /* Change the first letter of the filename to upper case */
+				case 'd': /* Use last modified date of the file as an identifier */
 					if (iflag_set == 0) {
-						_data_t.identifier = UPPER;
+						_data_t.identifier = FILE_DATE;
 						iflag_set = 1;
 					}
 					else {
@@ -392,7 +439,7 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-	if (_data_t.basename == NULL && _data_t.identifier != UPPER)
+	if (_data_t.basename == NULL)
 		fprintf(stderr, "You must set the basename (-b) for the files.\n");
 	else
 		walk_path(path, 15);
