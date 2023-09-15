@@ -169,6 +169,13 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 	return newpath;
 }
 
+/* Executes user provided script pointed by script_path and passes
+ * file_path as an argument for the script.
+*/
+static void execute_script_for_file(const char *script_path, const char *file_path) {
+	
+}
+
 /* Uses last modified date of the file as an identifier */
 static bool identifier_file_date(const char *filepath) {
 
@@ -217,6 +224,9 @@ static bool identifier_file_date(const char *filepath) {
 			retval = false;
 		}
 	}
+
+	if (_data_t.execute_script)
+		execute_script_for_file(_data_t.script_file_path, newpath);
 
 	free(newpath);
 	free(newnamepart);
@@ -278,6 +288,9 @@ static bool identifier_count(const char *filepath) {
 		}
 	}
 
+	if (_data_t.execute_script)
+		execute_script_for_file(_data_t.script_file_path, newpath);
+
 	free(newpath);
 	free(newnamepart);
 	free(ctmp);
@@ -326,6 +339,9 @@ static bool identifier_random(const char *filepath) {
 			retval = false;
 		}
 	}
+
+	if (_data_t.execute_script)
+		execute_script_for_file(_data_t.script_file_path, newpath);
 	
 	free(newpath);
 	free(newnamepart);
@@ -409,7 +425,7 @@ int main (int argc, char *argv[]) {
 	while (optind < argc) {
 		if ((c = getopt(argc, argv, "b:c:ehortdV")) != -1) {
 			switch (c) {
-				case 'b': //basename
+				case 'b': /* Sets the new basename for files */
 					_data_t.basename = optarg;			
 					break;
 				case 'c': /* Execute script point by optarg for each file */
