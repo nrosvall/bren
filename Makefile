@@ -4,10 +4,10 @@ MANPREFIX ?= $(PREFIX)/man
 
 CFLAGS += -std=c99 -Wall -lm
 
-all: brn
+all: bren
 
 clean:
-	rm -f brn *.o
+	rm -f bren *.o
 
 install: all
 	install -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(MANPREFIX)/man1
@@ -15,7 +15,7 @@ install: all
 	install -m644 brn.1 $(DESTDIR)$(MANPREFIX)/man1/
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/brn
-	rm -f $(DESTDIR)$(MANPREFIX)/man1/brn.1
+	rm -f $(DESTDIR)$(PREFIX)/bin/bren
+	rm -f $(DESTDIR)$(MANPREFIX)/man1/bren.1
 
 .PHONY: all clean install uninstall
