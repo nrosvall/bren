@@ -98,6 +98,9 @@ static bool is_dir(const char *path) {
 	return S_ISDIR(st.st_mode);
 }
 
+/* Takes fullpath to a file and a new name we want to use for the file
+ * pointed by the path. Returns NULL on if the new path exists.
+ */
 static char *construct_new_filename(const char *origpath, const char *newnamepart) {
 
 	char *filepath_copy;
@@ -152,8 +155,16 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 		strncat(newpath, ext, strlen(ext)+1);
 	}
 
+	/* Check if the created filepath exists. We don't want it to exists.
+	 * Because it's used as a destination for rename()
+	 */
+	if (access(filepath_copy, F_OK) == 0) {
+		free(newpath);
+		newpath = NULL;
+	}
+
 	free(filepath_copy);
-	//TODO: check if file exist, if yes, return nullptr
+	
 	return newpath;
 }
 
@@ -196,11 +207,14 @@ static bool identifier_file_date(const char *filepath) {
 
 	newpath = construct_new_filename(filepath, newnamepart);
 
-	if (rename(filepath, newpath) == -1) {
-		perror("identifier_file_date");
-		free(newpath);
-		free(newnamepart);
-		return false;
+	if (newpath == NULL) {
+		printf("Skipping. File with name %s already exists.\n", newnamepart);
+	}
+	else {
+		if (rename(filepath, newpath) == -1) {
+			perror("identifier_file_date");
+			retval = false;
+		}
 	}
 
 	free(newpath);
@@ -253,13 +267,14 @@ static bool identifier_count(const char *filepath) {
 
 	newpath = construct_new_filename(filepath, newnamepart);
 
-	if (rename(filepath, newpath) == -1) {
-		perror("identifier_count");
-		free(newpath);
-		free(newnamepart);
-		free(ctmp);
-
-		return false;
+	if (newpath == NULL) {
+		printf("Skipping. File with name %s already exists.\n", newnamepart);
+	}
+	else {
+		if (rename(filepath, newpath) == -1) {
+			perror("identifier_count");
+			retval = false;
+		}
 	}
 
 	free(newpath);
@@ -300,12 +315,17 @@ static bool identifier_random(const char *filepath) {
 	}
 
 	newpath = construct_new_filename(filepath, newnamepart);
-	
-	if (rename(filepath, newpath) == -1) {
-		perror("identifier_random");
-		retval = false;
-	}
 
+	if (newpath == NULL) {
+		printf("Skipping. File with name %s already exists.\n", newnamepart);
+	}
+	else {
+		if (rename(filepath, newpath) == -1) {
+			perror("identifier_random");
+			retval = false;
+		}
+	}
+	
 	free(newpath);
 	free(newnamepart);
 	
