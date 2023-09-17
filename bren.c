@@ -37,23 +37,23 @@
 #define VERSION "0.4"
 
 typedef enum {
-	/* append (n) to the basename. Eg. myphoto(1).jpg */
-	DEFAULT = 1,
-	/* use last modified date of the file as an identifier */
-	FILE_DATE,
-	/* generate 8 chars long random identifier */
-	RANDOM	
+        /* append (n) to the basename. Eg. myphoto(1).jpg */
+        DEFAULT = 1,
+        /* use last modified date of the file as an identifier */
+        FILE_DATE,
+        /* generate 8 chars long random identifier */
+        RANDOM
 } Identifier_t;
 
 typedef struct {
-	Identifier_t identifier;
-	char *basename;
-	bool remove_ext;
-	size_t file_count;
-	bool top_dir_only;
-	int depth_limit;
-	bool execute_script;
-	char *script_file_path;
+        Identifier_t identifier;
+        char *basename;
+        bool remove_ext;
+        size_t file_count;
+        bool top_dir_only;
+        int depth_limit;
+        bool execute_script;
+        char *script_file_path;
 } data_t;
 
 static void usage()
@@ -84,19 +84,19 @@ AUTHORS\n\
     http://www.gnu.org/licenses\n\
 "
 
-	printf(HELP);
+        printf(HELP);
 }
 
 data_t _data_t;
 
 static bool is_dir(const char *path) {
 
-	struct stat st;
+        struct stat st;
 
-	if (stat(path, &st) < 0)
-		return -1;
+        if (stat(path, &st) < 0)
+                return -1;
 
-	return S_ISDIR(st.st_mode);
+        return S_ISDIR(st.st_mode);
 }
 
 /* Takes fullpath to a file and a new name we want to use for the file
@@ -104,134 +104,135 @@ static bool is_dir(const char *path) {
  */
 static char *construct_new_filename(const char *origpath, const char *newnamepart) {
 
-	char *filepath_copy;
-	char *basepath;
-	char *newpath = NULL;
-	const char *ext;
-	int basepathlen;
-	int extlen = 0;
-	int newnamepartlen;
-	char sep[2];
-	char dot[2];
-	size_t newpathlen;
+        char *filepath_copy;
+        char *basepath;
+        char *newpath = NULL;
+        const char *ext;
+        int basepathlen;
+        int extlen = 0;
+        int newnamepartlen;
+        char sep[2];
+        char dot[2];
+        size_t newpathlen;
 
-	/* As we use strcat with these, they must be strings */
-	sep[0] = '/';
-	dot[0] = '.';
-	sep[1] = '\0';
-	dot[1] = '\0';
+        /* As we use strcat with these, they must be strings */
+        sep[0] = '/';
+        dot[0] = '.';
+        sep[1] = '\0';
+        dot[1] = '\0';
 
-	filepath_copy = strdup(origpath);
-	basepath = dirname(filepath_copy);
-	ext = strrchr(origpath, '.');
+        filepath_copy = strdup(origpath);
+        basepath = dirname(filepath_copy);
+        ext = strrchr(origpath, '.');
 
-	if (!ext || ext == origpath)
-		ext = NULL;
-	else
-		ext = ext + 1;
-	
-	basepathlen = strlen(basepath) + 2;
-	newnamepartlen = strlen(newnamepart);
+        if (!ext || ext == origpath)
+                ext = NULL;
+        else
+                ext = ext + 1;
 
-	if (ext != NULL)
-		extlen = strlen(ext);
+        basepathlen = strlen(basepath) + 2;
+        newnamepartlen = strlen(newnamepart);
 
-	/* +1 for the dot (eg. .png) */
-	newpathlen = (basepathlen + newnamepartlen + extlen + 1) * sizeof(char);
-	
-	newpath = malloc(newpathlen);
+        if (ext != NULL)
+                extlen = strlen(ext);
 
-	if (newpath == NULL) {
-		free(filepath_copy);
-		fprintf(stderr, "Malloc failed. Abort.\n");
-		exit(EXIT_FAILURE);
-	}
-	
-	strncpy(newpath, basepath, strlen(basepath) + 1);
-	strncat(newpath, sep, strlen(sep) + 1);
-	strncat(newpath, newnamepart, strlen(newnamepart) + 1);
+        /* +1 for the dot (eg. .png) */
+        newpathlen = (basepathlen + newnamepartlen + extlen + 1) * sizeof(char);
 
-	if (ext != NULL && !_data_t.remove_ext) {
-		strncat(newpath, dot, strlen(dot)+1);
-		strncat(newpath, ext, strlen(ext)+1);
-	}
+        newpath = malloc(newpathlen);
 
-	/* Check if the created filepath exists. We don't want it to exists.
-	 * Because it's used as a destination for rename()
-	 */
-	if (access(newpath, F_OK) == 0) {
-		free(newpath);
-		newpath = NULL;
-	}
+        if (newpath == NULL) {
+                free(filepath_copy);
+                fprintf(stderr, "Malloc failed. Abort.\n");
+                exit(EXIT_FAILURE);
+        }
 
-	free(filepath_copy);
-	
-	return newpath;
+        strncpy(newpath, basepath, strlen(basepath) + 1);
+        strncat(newpath, sep, strlen(sep) + 1);
+        strncat(newpath, newnamepart, strlen(newnamepart) + 1);
+
+        if (ext != NULL && !_data_t.remove_ext) {
+                strncat(newpath, dot, strlen(dot)+1);
+                strncat(newpath, ext, strlen(ext)+1);
+        }
+
+        /* Check if the created filepath exists. We don't want it to exists.
+         * Because it's used as a destination for rename()
+         */
+        if (access(newpath, F_OK) == 0) {
+                free(newpath);
+                newpath = NULL;
+        }
+
+        free(filepath_copy);
+
+        return newpath;
 }
 
-/* Executes user provided script pointed by script_path and passes
- * file_path as an argument for the script.
-*/
+/* Load GNU Guile script point by path.
+ *
+ * We look for
+ */
 static void execute_script_for_file(const char *script_path, const char *file_path) {
-	
+        int foo = 0;
 }
 
 /* Uses last modified date of the file as an identifier */
 static bool identifier_file_date(const char *filepath) {
 
-	bool retval = true;
-	char *newnamepart= NULL;
-	char *newpath = NULL;
-	char date[20];
-	struct stat attributes;
-	struct tm *ltime= NULL;
-	
-	/* +11 for the date (format: 2023-09-14T13:24:59) and for the trailing zero */
-	newnamepart = malloc((strlen(_data_t.basename) + 20 ) * sizeof(char));
+        bool  retval = true;
+        char *newnamepart= NULL;
+        char *newpath = NULL;
+        char date[20];
+        struct stat attributes;
+        struct tm *ltime= NULL;
 
-	if (newnamepart == NULL) {
-		fprintf(stderr, "Malloc failed. Abort.\n");
-		exit(EXIT_FAILURE);
-	}
+        /* +11 for the date (format: 2023-09-14T13:24:59) and for the trailing zero */
+        newnamepart = malloc((strlen(_data_t.basename) + 20 ) * sizeof(char));
 
-	strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
+        if (newnamepart == NULL) {
+                fprintf(stderr, "Malloc failed. Abort.\n");
+                exit(EXIT_FAILURE);
+        }
 
-	if (stat(filepath, &attributes) == -1) {
-		perror("identifier_file_date");
-		free(newnamepart);
-		return false;	
-	}
+        strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
 
-	ltime = localtime(&(attributes.st_mtime));
+        if (stat(filepath, &attributes) == -1) {
+                perror("identifier_file_date");
+                free(newnamepart);
+                return false;
+        }
 
-	if (ltime == NULL) {
-		free(newnamepart);
-		perror("identifier_file_date");
-		return false;
-	}
+        ltime = localtime(&(attributes.st_mtime));
 
-	strftime(date, 20, "%Y-%m-%dT%H:%M:%S", ltime);
-	strncat(newnamepart, date, strlen(date));
+        if (ltime == NULL) {
+                free(newnamepart);
+                perror("identifier_file_date");
+                return false;
+        }
 
-	newpath = construct_new_filename(filepath, newnamepart);
+        strftime(date, 20, "%Y-%m-%dT%H:%M:%S", ltime);
+        strncat(newnamepart, date, strlen(date));
 
-	if (newpath == NULL) {
-		printf("Skipping. File with name %s already exists.\n", newnamepart);
-	}
-	else {
-		if (rename(filepath, newpath) == -1) {
-			perror("identifier_file_date");
-			retval = false;
-		}
-	}
+        newpath = construct_new_filename(filepath, newnamepart);
 
-	if (_data_t.execute_script)
-		execute_script_for_file(_data_t.script_file_path, newpath);
+        if (newpath == NULL) {
+                printf("Skipping. File with name %s already exists.\n", newnamepart);
+        }
+        else {
+                if (rename(filepath, newpath) == -1) {
+                        perror("identifier_file_date");
+                        retval = false;
+                }
+        }
 
-	free(newpath);
-	free(newnamepart);
-	
-	return retval;
+        if (_data_t.execute_script)
+                execute_script_for_file(_data_t.script_file_path, newpath);
+
+        free(newpath);
+        free(newnamepart);
+
+        return retval;
 }
 
 /* Implements the default behaviour of bren.
@@ -242,250 +243,250 @@ static bool identifier_file_date(const char *filepath) {
  */
 static bool identifier_count(const char *filepath) {
 
-	bool retval = true;
-	char *newnamepart = NULL;
-	char *newpath = NULL;
-	size_t length;
-	char pa = '(';
-	char pe = ')';
-	char *ctmp = NULL;
-	
-	/* count the digits in the file_count */
-	length = (_data_t.file_count == 0) ? 1 : log10(_data_t.file_count) + 1;
-	/* +3 for ( and ) and the trailing zero */
-	newnamepart = malloc((strlen(_data_t.basename) + length + 3) *sizeof(char));
+        bool retval = true;
+        char *newnamepart = NULL;
+        char *newpath = NULL;
+        size_t length;
+        char pa = '(';
+        char pe = ')';
+        char *ctmp = NULL;
 
-	if (newnamepart == NULL) {
-		fprintf(stderr, "Malloc failed. Abort.\n");
-		exit(EXIT_FAILURE);
-	}
+        /* count the digits in the file_count */
+        length = (_data_t.file_count == 0) ? 1 : log10(_data_t.file_count) + 1;
+        /* +3 for ( and ) and the trailing zero */
+        newnamepart = malloc((strlen(_data_t.basename) + length + 3) *sizeof(char));
 
-	strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
-	strncat(newnamepart, &pa, 1);
+        if (newnamepart == NULL) {
+                fprintf(stderr, "Malloc failed. Abort.\n");
+                exit(EXIT_FAILURE);
+        }
 
-	ctmp = malloc(length + 1);
+        strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
+        strncat(newnamepart, &pa, 1);
 
-	if (ctmp == NULL) {
-		free(newnamepart);
-		fprintf(stderr, "Malloc failed. Abort.\n");
-		exit(EXIT_FAILURE);
-	}
-	
-	snprintf(ctmp, length + 1, "%zu", _data_t.file_count);
-	
-	strncat(newnamepart, ctmp, strlen(ctmp));
-	strncat(newnamepart, &pe, 1);
+        ctmp = malloc(length + 1);
 
-	newpath = construct_new_filename(filepath, newnamepart);
+        if (ctmp == NULL) {
+                free(newnamepart);
+                fprintf(stderr, "Malloc failed. Abort.\n");
+                exit(EXIT_FAILURE);
+        }
 
-	if (newpath == NULL) {
-		printf("Skipping. File with name %s already exists.\n", newnamepart);
-	}
-	else {
-		if (rename(filepath, newpath) == -1) {
-			perror("identifier_count");
-			retval = false;
-		}
-	}
+        snprintf(ctmp, length + 1, "%zu", _data_t.file_count);
 
-	if (_data_t.execute_script)
-		execute_script_for_file(_data_t.script_file_path, newpath);
+        strncat(newnamepart, ctmp, strlen(ctmp));
+        strncat(newnamepart, &pe, 1);
 
-	free(newpath);
-	free(newnamepart);
-	free(ctmp);
-	
-	return retval;
+        newpath = construct_new_filename(filepath, newnamepart);
+
+        if (newpath == NULL) {
+                printf("Skipping. File with name %s already exists.\n", newnamepart);
+        }
+        else {
+                if (rename(filepath, newpath) == -1) {
+                        perror("identifier_count");
+                        retval = false;
+                }
+        }
+
+        if (_data_t.execute_script)
+                execute_script_for_file(_data_t.script_file_path, newpath);
+
+        free(newpath);
+        free(newnamepart);
+        free(ctmp);
+
+        return retval;
 }
 
 /* Implements the random identifier.
- * 
+ *
  * Filename pointed by filepath is appended with 8 random characters.
  * For example test.txt becomes testRYUGHTQW.txt
  */
 static bool identifier_random(const char *filepath) {
 
-	bool retval = true;
-	char *newnamepart = NULL;
-	const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	const size_t chars_size = sizeof(chars) - 1;
-	char *newpath = NULL;
+        bool retval = true;
+        char *newnamepart = NULL;
+        const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const size_t chars_size = sizeof(chars) - 1;
+        char *newpath = NULL;
 
-	newnamepart = malloc((strlen(_data_t.basename) + 9) * sizeof(char));
+        newnamepart = malloc((strlen(_data_t.basename) + 9) * sizeof(char));
 
-	if (newnamepart == NULL) {
-		fprintf(stderr, "Malloc failed. Abort.\n");
-		exit(EXIT_FAILURE);
-	}
+        if (newnamepart == NULL) {
+                fprintf(stderr, "Malloc failed. Abort.\n");
+                exit(EXIT_FAILURE);
+        }
 
-	strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
+        strncpy(newnamepart, _data_t.basename, strlen(_data_t.basename) + 1);
 
-	for (int n = 0; n < 8; n++) {
-		char c;
-		int index = rand() % chars_size;
+        for (int n = 0; n < 8; n++) {
+                char c;
+                int index = rand() % chars_size;
 
-		c = chars[index];
-		strncat(newnamepart, &c, 1);
-	}
+                c = chars[index];
+                strncat(newnamepart, &c, 1);
+        }
 
-	newpath = construct_new_filename(filepath, newnamepart);
+        newpath = construct_new_filename(filepath, newnamepart);
 
-	if (newpath == NULL) {
-		printf("Skipping. File with name %s already exists.\n", newnamepart);
-	}
-	else {
-		if (rename(filepath, newpath) == -1) {
-			perror("identifier_random");
-			retval = false;
-		}
-	}
+        if (newpath == NULL) {
+                printf("Skipping. File with name %s already exists.\n", newnamepart);
+        }
+        else {
+                if (rename(filepath, newpath) == -1) {
+                        perror("identifier_random");
+                        retval = false;
+                }
+        }
 
-	if (_data_t.execute_script)
-		execute_script_for_file(_data_t.script_file_path, newpath);
-	
-	free(newpath);
-	free(newnamepart);
-	
-	return retval;
+        if (_data_t.execute_script)
+                execute_script_for_file(_data_t.script_file_path, newpath);
+
+        free(newpath);
+        free(newnamepart);
+
+        return retval;
 }
 
 static bool select_identifier(const char *filepath) {
 
-	bool retval = false;
+        bool retval = false;
 
-	switch(_data_t.identifier) {
-		case DEFAULT:
-			retval = identifier_count(filepath);
-			break;
-		case FILE_DATE:
-			retval = identifier_file_date(filepath);
-			break;
-		case RANDOM:
-			retval = identifier_random(filepath);
-			break;
-	}
-	
-	return retval;
+        switch(_data_t.identifier) {
+        case DEFAULT:
+                retval = identifier_count(filepath);
+                break;
+        case FILE_DATE:
+                retval = identifier_file_date(filepath);
+                break;
+        case RANDOM:
+                retval = identifier_random(filepath);
+                break;
+        }
+
+        return retval;
 }
 
 static int nftw_cb(const char *filepath, const struct stat *st,
-				   int tflag, struct FTW *ftwbuffer) {
+                   int tflag, struct FTW *ftwbuffer) {
 
-	if (_data_t.top_dir_only) {
-		if (tflag == FTW_D && ftwbuffer->level == _data_t.depth_limit) {
-			return 1;
-		}
-	}
-	if (tflag == FTW_F) {
-		if (access(filepath, F_OK) == -1) {
-			fprintf(stderr, "%s does not exist, skipping...\n", filepath);
-		}
-		else {
-			_data_t.file_count++;
-			if (!select_identifier(filepath))
-				fprintf(stderr, "Renaming %s failed\n", filepath);
-		}
-	}
-	
-	return 0;					
+        if (_data_t.top_dir_only) {
+                if (tflag == FTW_D && ftwbuffer->level == _data_t.depth_limit) {
+                        return 1;
+                }
+        }
+        if (tflag == FTW_F) {
+                if (access(filepath, F_OK) == -1) {
+                        fprintf(stderr, "%s does not exist, skipping...\n", filepath);
+                }
+                else {
+                        _data_t.file_count++;
+                        if (!select_identifier(filepath))
+                                fprintf(stderr, "Renaming %s failed\n", filepath);
+                }
+        }
+
+        return 0;
 }
 
 static void walk_path(const char *path, int fd_limit) {
 
-	int fflags = 0;
+        int fflags = 0;
 
-	fflags |= FTW_DEPTH;
-	fflags |= FTW_PHYS;
-	
-	if (nftw(path, nftw_cb, fd_limit, fflags) == -1) {
-		perror("nftw");
-		exit(EXIT_FAILURE);
-	}
+        fflags |= FTW_DEPTH;
+        fflags |= FTW_PHYS;
+
+        if (nftw(path, nftw_cb, fd_limit, fflags) == -1) {
+                perror("nftw");
+                exit(EXIT_FAILURE);
+        }
 }
 
 int main (int argc, char *argv[]) {
 
-	int c;
-	char *path = NULL;	
-	int iflag_set = 0;
+        int c;
+        char *path = NULL;
+        int iflag_set = 0;
 
-	if (argc == 1) {
-		/* We don't have any arguments. Show usage and exit. */
-		usage();
-		return 0;
-	}
+        if (argc == 1) {
+                /* We don't have any arguments. Show usage and exit. */
+                usage();
+                return 0;
+        }
 
-	_data_t.remove_ext = false;
-	_data_t.identifier = DEFAULT;
-	_data_t.file_count = 0;
-	_data_t.top_dir_only = false;
-	_data_t.execute_script = false;
-	_data_t.script_file_path = NULL;
-	
-	while (optind < argc) {
-		if ((c = getopt(argc, argv, "b:c:ehortdV")) != -1) {
-			switch (c) {
-				case 'b': /* Sets the new basename for files */
-					_data_t.basename = optarg;			
-					break;
-				case 'c': /* Execute script point by optarg for each file */
-					_data_t.execute_script = true;
-					_data_t.script_file_path = optarg;
-					break;
-				case 'e':
-					_data_t.remove_ext = true;
-					break;	
-				case 'h':
-					usage();
-					return 0;
-					break;
-				case 'r': /* Append filenames with 8 random characters */
-					if (iflag_set == 0) {
-						srand(time(NULL));
-						_data_t.identifier = RANDOM;
-						iflag_set = 1;
-					}
-					else {
-						fprintf(stderr, "Another flag already set, ignoring -r\n");
-					}
-					break;
-				case 't': /* Do not traverse into the subdirectories of the path */
-					_data_t.top_dir_only = true;
-					_data_t.depth_limit = 1;
-					break;
-				case 'd': /* Use last modified date of the file as an identifier */
-					if (iflag_set == 0) {
-						_data_t.identifier = FILE_DATE;
-						iflag_set = 1;
-					}
-					else {
-						fprintf(stderr, "Another flag already set, ignoring -C\n");
-					}
-					break;
-				case 'V':
-					printf("bren version %s\n", VERSION);
-					return 0;
-				case '?':
-					usage();
-					return 0;
-			}
-		}
-		else {
-			path = argv[1];
+        _data_t.remove_ext = false;
+        _data_t.identifier = DEFAULT;
+        _data_t.file_count = 0;
+        _data_t.top_dir_only = false;
+        _data_t.execute_script = false;
+        _data_t.script_file_path = NULL;
 
-			if (!is_dir(path)) {
-				fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
-				return 0;
-			}
-			
-			optind++;
-		}
-	}
+        while (optind < argc) {
+                if ((c = getopt(argc, argv, "b:c:ehortdV")) != -1) {
+                        switch (c) {
+                        case 'b': /* Sets the new basename for files */
+                                _data_t.basename = optarg;
+                                break;
+                        case 'c': /* Execute script point by optarg for each file */
+                                _data_t.execute_script = true;
+                                _data_t.script_file_path = optarg;
+                                break;
+                        case 'e':
+                                _data_t.remove_ext = true;
+                                break;
+                        case 'h':
+                                usage();
+                                return 0;
+                                break;
+                        case 'r': /* Append filenames with 8 random characters */
+                                if (iflag_set == 0) {
+                                        srand(time(NULL));
+                                        _data_t.identifier = RANDOM;
+                                        iflag_set = 1;
+                                }
+                                else {
+                                        fprintf(stderr, "Another flag already set, ignoring -r\n");
+                                }
+                                break;
+                        case 't': /* Do not traverse into the subdirectories of the path */
+                                _data_t.top_dir_only = true;
+                                _data_t.depth_limit = 1;
+                                break;
+                        case 'd': /* Use last modified date of the file as an identifier */
+                                if (iflag_set == 0) {
+                                        _data_t.identifier = FILE_DATE;
+                                        iflag_set = 1;
+                                }
+                                else {
+                                        fprintf(stderr, "Another flag already set, ignoring -C\n");
+                                }
+                                break;
+                        case 'V':
+                                printf("bren version %s\n", VERSION);
+                                return 0;
+                        case '?':
+                                usage();
+                                return 0;
+                        }
+                }
+                else {
+                        path = argv[1];
 
-	if (_data_t.basename == NULL)
-		fprintf(stderr, "You must set the basename (-b) for the files.\n");
-	else
-		walk_path(path, 15);
+                        if (!is_dir(path)) {
+                                fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
+                                return 0;
+                        }
 
-	return 0;
+                        optind++;
+                }
+        }
+
+        if (_data_t.basename == NULL)
+                fprintf(stderr, "You must set the basename (-b) for the files.\n");
+        else
+                walk_path(path, 15);
+
+        return 0;
 }
