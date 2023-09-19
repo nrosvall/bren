@@ -21,8 +21,7 @@
  * bren should be fairly portable to any POSIX system.
  */
 
-#define _XOPEN_SOURCE 700
-#define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -372,11 +371,6 @@ static bool select_identifier(const char *filepath) {
 static int nftw_cb(const char *filepath, const struct stat *st,
                    int tflag, struct FTW *ftwbuffer) {
 
-        if (_data_t.top_dir_only) {
-                if (tflag == FTW_D && ftwbuffer->level == _data_t.depth_limit) {
-                        return 1;
-                }
-        }
         if (tflag == FTW_F) {
                 if (access(filepath, F_OK) == -1) {
                         fprintf(stderr, "%s does not exist, skipping...\n", filepath);
@@ -388,14 +382,24 @@ static int nftw_cb(const char *filepath, const struct stat *st,
                 }
         }
 
-        return 0;
+        if (_data_t.top_dir_only) {
+                if (ftwbuffer->level == _data_t.depth_limit && tflag == FTW_D) {
+                        return FTW_SKIP_SUBTREE;
+                }
+                else {
+                        return FTW_CONTINUE;
+                }
+
+        }
+
+        return FTW_CONTINUE;
 }
 
 static void walk_path(const char *path, int fd_limit) {
 
         int fflags = 0;
 
-        fflags |= FTW_DEPTH;
+        fflags |= FTW_ACTIONRETVAL;
         fflags |= FTW_PHYS;
 
         if (nftw(path, nftw_cb, fd_limit, fflags) == -1) {
@@ -413,6 +417,13 @@ int main (int argc, char *argv[]) {
         if (argc == 1) {
                 /* We don't have any arguments. Show usage and exit. */
                 usage();
+                return 0;
+        }
+
+        path = argv[1];
+
+        if (!is_dir(path)) {
+                fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
                 return 0;
         }
 
@@ -471,16 +482,16 @@ int main (int argc, char *argv[]) {
                                 return 0;
                         }
                 }
-                else {
+                /*else {
                         path = argv[1];
-
+                        printf("joooo joooo %s\n", path);
                         if (!is_dir(path)) {
                                 fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
                                 return 0;
                         }
 
                         optind++;
-                }
+                        }*/
         }
 
         if (_data_t.basename == NULL)
