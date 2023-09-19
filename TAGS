@@ -1,31 +1,30 @@
 
-bren.c,978
-#define _XOPEN_SOURCE 24,929
-#define _POSIX_C_SOURCE 25,955
-#define VERSION 37,1162
-        DEFAULT 41,1261
-        FILE_DATE,43,1348
-        RANDOM45,1421
-} Identifier_t;46,1436
-        Identifier_t identifier;49,1470
-        char *basename;basename50,1503
-        bool remove_ext;51,1527
-        size_t file_count;52,1552
-        bool top_dir_only;53,1579
-        int depth_limit;54,1606
-        bool execute_script;55,1631
-        char *script_file_path;script_file_path56,1660
-} data_t;57,1692
-static void usage(59,1703
-#define HELP 61,1725
-data_t _data_t;90,2600
-static bool is_dir(92,2617
-static char *construct_new_filename(construct_new_filename105,2921
-static void execute_script_for_file(176,4865
-static bool identifier_file_date(181,5014
-static bool identifier_count(244,6901
-static bool identifier_random(307,8785
-static bool select_identifier(353,10121
-static int nftw_cb(372,10580
-static void walk_path(394,11326
-int main 407,11606
+bren.c,943
+#define _GNU_SOURCE24,929
+#define VERSION 36,1124
+        DEFAULT 40,1223
+        FILE_DATE,42,1310
+        RANDOM44,1383
+} Identifier_t;45,1398
+        Identifier_t identifier;48,1432
+        char *basename;basename49,1465
+        bool remove_ext;50,1489
+        size_t file_count;51,1514
+        bool top_dir_only;52,1541
+        int depth_limit;53,1568
+        bool execute_script;54,1593
+        char *script_file_path;script_file_path55,1622
+} data_t;56,1654
+static void usage(58,1665
+#define HELP 60,1687
+data_t _data_t;89,2562
+static bool is_dir(91,2579
+static char *construct_new_filename(construct_new_filename104,2883
+static void execute_script_for_file(175,4884
+static bool identifier_file_date(180,5033
+static bool identifier_count(243,6920
+static bool identifier_random(306,8804
+static bool select_identifier(352,10140
+static int nftw_cb(371,10599
+static void walk_path(398,11459
+int main 411,11746
