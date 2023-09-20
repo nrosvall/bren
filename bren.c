@@ -67,12 +67,12 @@ OPTIONS\n\
 \n\
     -p <path>          Set path where to look for files\n\
     -b <name>          Set basename for the files\n\
-    -c <path>          After renaming, execute script for each file\n\
+    -c <path>          After renaming, execute a script for each file\n\
     -e                 Remove extension from the files\n\
     -r                 Generate random, 8 characters long identifier\n\
     -t                 Do not traverse into subdirectories of the path\n\
     -d                 Use last modified date of the file as an identifier\n\
-    -D                 Dry run. Run, but do not actually rename files\n\
+    -D                 Dry run. Run, but do not actually rename any files\n\
 \n\
     -h                 Show short help and exit. This page\n\
     -V                 Show version number of the program\n\
