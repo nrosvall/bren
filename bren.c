@@ -53,6 +53,7 @@ typedef struct {
         int depth_limit;
         bool execute_script;
         char *script_file_path;
+        bool dry_run;
 } data_t;
 
 static void usage()
@@ -71,6 +72,7 @@ OPTIONS\n\
     -r                 Generate random, 8 characters long identifier\n\
     -t                 Do not traverse into subdirectories of the path\n\
     -d                 Use last modified date of the file as an identifier\n\
+    -D                 Dry run. Run, but do not actually rename files\n\
 \n\
     -h                 Show short help and exit. This page\n\
     -V                 Show version number of the program\n\
@@ -101,6 +103,8 @@ static bool is_dir(const char *path) {
 
 /* Takes fullpath to a file and a new name we want to use for the file
  * pointed by the path. Returns NULL on if the new path exists.
+ *
+ * Called must free the returned memory.
  */
 static char *construct_new_filename(const char *origpath, const char *newnamepart) {
 
@@ -220,14 +224,25 @@ static bool identifier_file_date(const char *filepath) {
                 printf("Skipping. File with name %s already exists.\n", newnamepart);
         }
         else {
-                if (rename(filepath, newpath) == -1) {
-                        perror("identifier_file_date");
-                        retval = false;
+                if(_data_t.dry_run) {
+                        printf("Rename: %s to %s\n", filepath, newpath);
+                }
+                else {
+                        if (rename(filepath, newpath) == -1) {
+                                perror("identifier_random");
+                                retval = false;
+                        }
                 }
         }
 
-        if (_data_t.execute_script)
-                execute_script_for_file(_data_t.script_file_path, newpath);
+        if(!_data_t.dry_run) {
+                if(_data_t.execute_script)
+                        execute_script_for_file(_data_t.script_file_path, newpath);
+        }
+        else {
+                if(_data_t.execute_script)
+                        printf("Executing script %s\n", _data_t.script_file_path);
+        }
 
         free(newpath);
         free(newnamepart);
@@ -279,18 +294,29 @@ static bool identifier_count(const char *filepath) {
 
         newpath = construct_new_filename(filepath, newnamepart);
 
-        if (newpath == NULL) {
+        if(newpath == NULL) {
                 printf("Skipping. File with name %s already exists.\n", newnamepart);
         }
         else {
-                if (rename(filepath, newpath) == -1) {
-                        perror("identifier_count");
-                        retval = false;
+                if(_data_t.dry_run) {
+                        printf("Rename: %s to %s\n", filepath, newpath);
+                }
+                else {
+                        if (rename(filepath, newpath) == -1) {
+                                perror("identifier_count");
+                                retval = false;
+                        }
                 }
         }
 
-        if (_data_t.execute_script)
-                execute_script_for_file(_data_t.script_file_path, newpath);
+        if(!_data_t.dry_run) {
+                if(_data_t.execute_script)
+                        execute_script_for_file(_data_t.script_file_path, newpath);
+        }
+        else {
+                if(_data_t.execute_script)
+                        printf("Executing script %s\n", _data_t.script_file_path);
+        }
 
         free(newpath);
         free(newnamepart);
@@ -335,14 +361,25 @@ static bool identifier_random(const char *filepath) {
                 printf("Skipping. File with name %s already exists.\n", newnamepart);
         }
         else {
-                if (rename(filepath, newpath) == -1) {
-                        perror("identifier_random");
-                        retval = false;
+                if(_data_t.dry_run) {
+                        printf("Rename: %s to %s\n", filepath, newpath);
+                }
+                else {
+                        if (rename(filepath, newpath) == -1) {
+                                perror("identifier_random");
+                                retval = false;
+                        }
                 }
         }
 
-        if (_data_t.execute_script)
-                execute_script_for_file(_data_t.script_file_path, newpath);
+        if(!_data_t.dry_run) {
+                if(_data_t.execute_script)
+                        execute_script_for_file(_data_t.script_file_path, newpath);
+        }
+        else {
+                if(_data_t.execute_script)
+                        printf("Executing script %s\n", _data_t.script_file_path);
+        }
 
         free(newpath);
         free(newnamepart);
@@ -384,13 +421,10 @@ static int nftw_cb(const char *filepath, const struct stat *st,
         }
 
         if (_data_t.top_dir_only) {
-                if (ftwbuffer->level == _data_t.depth_limit && tflag == FTW_D) {
+                if (ftwbuffer->level == _data_t.depth_limit && tflag == FTW_D)
                         return FTW_SKIP_SUBTREE;
-                }
-                else {
+                else
                         return FTW_CONTINUE;
-                }
-
         }
 
         return FTW_CONTINUE;
@@ -403,6 +437,9 @@ static void walk_path(const char *path, int fd_limit) {
         fflags |= FTW_ACTIONRETVAL;
         fflags |= FTW_PHYS;
 
+        if(_data_t.dry_run)
+                printf("===============Dry run===============\n");
+
         if (nftw(path, nftw_cb, fd_limit, fflags) == -1) {
                 perror("walk_path");
                 exit(EXIT_FAILURE);
@@ -411,7 +448,7 @@ static void walk_path(const char *path, int fd_limit) {
 
 int main (int argc, char *argv[]) {
 
-        int opt;
+        int opt, index;
         char *path = NULL;
         int iflag_set = 0;
 
@@ -427,9 +464,13 @@ int main (int argc, char *argv[]) {
         _data_t.top_dir_only = false;
         _data_t.execute_script = false;
         _data_t.script_file_path = NULL;
+        _data_t.dry_run = false;
 
-        while ((opt = getopt(argc, argv, "p:b:c:ehortdV")) != -1) {
+        while ((opt = getopt(argc, argv, "p:b:c:ehDrtdV")) != -1) {
                 switch (opt) {
+                case 'D':
+                        _data_t.dry_run = true;
+                        break;
                 case 'p':
                         path = optarg;
                         break;
@@ -474,7 +515,6 @@ int main (int argc, char *argv[]) {
                         printf("bren version %s\n", VERSION);
                         return 0;
                 case '?':
-                        printf("fooo\n");
                         break;
                 default:
                         usage();
@@ -482,6 +522,9 @@ int main (int argc, char *argv[]) {
                 }
 
         }
+
+        for (index = optind; index < argc; index++)
+                printf("Skipping invalid argument %s\n", argv[index]);
 
         if (path == NULL) {
                 fprintf(stderr, "Path (-p) is not set. Abort. See -h for help.\n");
