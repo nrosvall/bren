@@ -64,6 +64,7 @@ SYNOPSIS\n\
 \n\
 OPTIONS\n\
 \n\
+    -p <path>          Set path where to look for files\n\
     -b <name>          Set basename for the files\n\
     -c <path>          After renaming, execute script for each file\n\
     -e                 Remove extension from the files\n\
@@ -410,20 +411,13 @@ static void walk_path(const char *path, int fd_limit) {
 
 int main (int argc, char *argv[]) {
 
-        int c;
+        int opt;
         char *path = NULL;
         int iflag_set = 0;
 
         if (argc == 1) {
                 /* We don't have any arguments. Show usage and exit. */
                 usage();
-                return 0;
-        }
-
-        path = argv[1];
-
-        if (!is_dir(path)) {
-                fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
                 return 0;
         }
 
@@ -434,64 +428,67 @@ int main (int argc, char *argv[]) {
         _data_t.execute_script = false;
         _data_t.script_file_path = NULL;
 
-        while (optind < argc) {
-                if ((c = getopt(argc, argv, "b:c:ehortdV")) != -1) {
-                        switch (c) {
-                        case 'b': /* Sets the new basename for files */
-                                _data_t.basename = optarg;
-                                break;
-                        case 'c': /* Execute script point by optarg for each file */
-                                _data_t.execute_script = true;
-                                _data_t.script_file_path = optarg;
-                                break;
-                        case 'e':
-                                _data_t.remove_ext = true;
-                                break;
-                        case 'h':
-                                usage();
-                                return 0;
-                                break;
-                        case 'r': /* Append filenames with 8 random characters */
-                                if (iflag_set == 0) {
-                                        srand(time(NULL));
-                                        _data_t.identifier = RANDOM;
-                                        iflag_set = 1;
-                                }
-                                else {
-                                        fprintf(stderr, "Another flag already set, ignoring -r\n");
-                                }
-                                break;
-                        case 't': /* Do not traverse into the subdirectories of the path */
-                                _data_t.top_dir_only = true;
-                                _data_t.depth_limit = 1;
-                                break;
-                        case 'd': /* Use last modified date of the file as an identifier */
-                                if (iflag_set == 0) {
-                                        _data_t.identifier = FILE_DATE;
-                                        iflag_set = 1;
-                                }
-                                else {
-                                        fprintf(stderr, "Another flag already set, ignoring -C\n");
-                                }
-                                break;
-                        case 'V':
-                                printf("bren version %s\n", VERSION);
-                                return 0;
-                        case '?':
-                                usage();
-                                return 0;
+        while ((opt = getopt(argc, argv, "p:b:c:ehortdV")) != -1) {
+                switch (opt) {
+                case 'p':
+                        path = optarg;
+                        break;
+                case 'b': /* Sets the new basename for files */
+                        _data_t.basename = optarg;
+                        break;
+                case 'c': /* Execute script point by optarg for each file */
+                        _data_t.execute_script = true;
+                        _data_t.script_file_path = optarg;
+                        break;
+                case 'e':
+                        _data_t.remove_ext = true;
+                        break;
+                case 'h':
+                        usage();
+                        return 0;
+                        break;
+                case 'r': /* Append filenames with 8 random characters */
+                        if (iflag_set == 0) {
+                                srand(time(NULL));
+                                _data_t.identifier = RANDOM;
+                                iflag_set = 1;
                         }
+                        else {
+                                fprintf(stderr, "Another flag already set, ignoring -r\n");
+                        }
+                        break;
+                case 't': /* Do not traverse into the subdirectories of the path */
+                        _data_t.top_dir_only = true;
+                        _data_t.depth_limit = 1;
+                        break;
+                case 'd': /* Use last modified date of the file as an identifier */
+                        if (iflag_set == 0) {
+                                _data_t.identifier = FILE_DATE;
+                                iflag_set = 1;
+                        }
+                        else {
+                                fprintf(stderr, "Another flag already set, ignoring -C\n");
+                        }
+                        break;
+                case 'V':
+                        printf("bren version %s\n", VERSION);
+                        return 0;
+                default:
+                        usage();
+                        return 0;
                 }
-                /*else {
-                        path = argv[1];
-                        printf("joooo joooo %s\n", path);
-                        if (!is_dir(path)) {
-                                fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
-                                return 0;
-                        }
 
-                        optind++;
-                        }*/
+        }
+
+        if (path == NULL) {
+                fprintf(stderr, "Path (-p) is not set. Abort.\n");
+                return 0;
+
+        }
+
+        if (!is_dir(path)) {
+                fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
+                return 0;
         }
 
         if (_data_t.basename == NULL)
