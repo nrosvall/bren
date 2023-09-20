@@ -508,7 +508,7 @@ int main (int argc, char *argv[]) {
                                 iflag_set = 1;
                         }
                         else {
-                                fprintf(stderr, "Another flag already set, ignoring -C\n");
+                                fprintf(stderr, "Another flag already set, ignoring -d\n");
                         }
                         break;
                 case 'V':
