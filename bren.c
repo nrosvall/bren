@@ -93,10 +93,10 @@ static bool is_dir(const char *path) {
 
         struct stat st;
 
-        if (stat(path, &st) < 0)
-                return -1;
+        if (stat(path, &st) == 0 && S_ISDIR(st.st_mode))
+                return 1;
 
-        return S_ISDIR(st.st_mode);
+        return 0;
 }
 
 /* Takes fullpath to a file and a new name we want to use for the file
@@ -404,7 +404,7 @@ static void walk_path(const char *path, int fd_limit) {
         fflags |= FTW_PHYS;
 
         if (nftw(path, nftw_cb, fd_limit, fflags) == -1) {
-                perror("nftw");
+                perror("walk_path");
                 exit(EXIT_FAILURE);
         }
 }
@@ -473,6 +473,9 @@ int main (int argc, char *argv[]) {
                 case 'V':
                         printf("bren version %s\n", VERSION);
                         return 0;
+                case '?':
+                        printf("fooo\n");
+                        break;
                 default:
                         usage();
                         return 0;
@@ -481,18 +484,18 @@ int main (int argc, char *argv[]) {
         }
 
         if (path == NULL) {
-                fprintf(stderr, "Path (-p) is not set. Abort.\n");
+                fprintf(stderr, "Path (-p) is not set. Abort. See -h for help.\n");
                 return 0;
 
         }
 
         if (!is_dir(path)) {
-                fprintf(stderr, "%s is not a valid directory. Abort.\n", path);
+                fprintf(stderr, "%s is not a valid directory path. Abort.\n", path);
                 return 0;
         }
 
         if (_data_t.basename == NULL)
-                fprintf(stderr, "You must set the basename (-b) for the files.\n");
+                fprintf(stderr, "You must set the basename (-b) for the files. See -h for help.\n");
         else
                 walk_path(path, 15);
 
