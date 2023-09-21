@@ -1,0 +1,65 @@
+.\" Manpage for Bren.
+.\" Any errors or typos, contact niko@byteptr.com.
+
+.TH man 1 "21 Sep 2023" "0.4" "Bren man page"
+.SH NAME
+Bren \- Bulk file renaming program for the shell
+.SH SYNOPSIS
+bren [OPTIONS]
+.SH DESCRIPTION
+Bren is a program for renaming multiple files at once. Bren is versatile
+and offers support for post-rename scripting with GNU Guile. Bren runs
+on the command line.
+.SH OPTIONS
+.IP "-p <path>"
+Set path where to look for files
+.IP "-b <name>"
+Set basename for the files
+.IP "-c <path>"
+After renaming, execute a script pointed by the path, for each file
+.IP "-e"
+Remove extension from the files
+.IP "-r"
+Generate random, 8 characters long identifier
+.IP "-t"
+Do not traverse into subdirectories of the path
+.IP "-d"
+Use last modified date of the file as an identifier
+.IP "-D"
+Dry run. Run, but do not actually rename any files
+.IP "-h"
+Show short help and exit
+.IP "-V"
+Show version number of the program
+.SH EXAMPLES
+Use default identifier:
+       bren -p /some/path/to/dir -b "basename"
+.PP
+Do not traverse into subdirectories and remove any file extensions:
+       bren -p /some/path/to/dir -b "basename" -t -e
+.PP
+Generate random, 8 characters long identifier:
+       bren -p /some/path/to/dir -b "basename" -r
+.PP
+Dry run:
+       bren -p /some/path/to/dir -b "basename" -r -D
+.PP
+After the rename operation, execute a GNU Guile script:
+       bren -p /some/path/to/dir -b "basename" -c /path/to/script.scm
+.PP
+Guile scripts must contain function init-bren(filepath).
+Bren looks for that and calls it after every file rename operation.
+Argument filepath is the path of the file that was renamed.
+.SH NOTES
+When we talk about identifiers, we mean the part of the
+new filename that is unique to each file. For example if
+a directory contains files img656.jpg and img343.jpg,
+running bren -p /path/to/the/directory -b "myphoto"
+would rename the files to myphoto(1).jpg and myphoto(2).jpg.
+.SH AUTHORS
+Written by Niko Rosvall.
+.SH COPYRIGHT
+Copyright (C) 2023 Niko Rosvall <niko@byteptr.com>
+.PP
+Released under license GPL-3+. For more information, see
+http://www.gnu.org/licenses
