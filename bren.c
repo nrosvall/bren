@@ -61,7 +61,7 @@ static void usage()
 #define HELP "\
 SYNOPSIS\n\
 \n\
-    bren <path> [options]\n\
+    bren [options]\n\
 \n\
 OPTIONS\n\
 \n\
