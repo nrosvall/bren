@@ -1,8 +1,8 @@
 DESTDIR   ?=
 PREFIX    ?= /usr/local
 MANPREFIX ?= $(PREFIX)/man
-
-CFLAGS += -g -std=c99 -Wall -lguile-3.0 -lgmp -lm
+DEBUG ?=
+CFLAGS += $(DEBUG) -std=c99 -Wall -lguile-3.0 -lgmp -lm
 
 all: bren
 
