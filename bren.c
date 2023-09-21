@@ -175,7 +175,7 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 
 /* Load GNU Guile script pointed by script_path.
  *
- * We look for init_bren function from the script and call it.
+ * We look for init-bren function from the script and call it.
  */
 static void execute_script_for_file(const char *script_path, const char *file_path) {
 
