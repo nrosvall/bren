@@ -18,14 +18,14 @@ bren.c,973
 } data_t;57,1676
 static void usage(59,1687
 #define HELP 61,1709
-data_t _data_t;91,2643
-static bool is_dir(93,2660
-static char *construct_new_filename(construct_new_filename108,3013
-static void execute_script_for_file(179,5014
-static bool identifier_file_date(184,5163
-static bool identifier_count(247,7050
-static bool identifier_random(310,8934
-static bool select_identifier(356,10270
-static int nftw_cb(375,10729
-static void walk_path(399,11548
-int main 412,11840
+data_t _data_t;92,2715
+static bool is_dir(94,2732
+static char *construct_new_filename(construct_new_filename109,3085
+static void execute_script_for_file(180,5086
+static bool identifier_file_date(185,5235
+static bool identifier_count(259,7528
+static bool identifier_random(333,9820
+static bool select_identifier(390,11565
+static int nftw_cb(409,12024
+static void walk_path(433,12843
+int main 449,13231

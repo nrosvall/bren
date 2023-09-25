@@ -2,7 +2,7 @@ DESTDIR   ?=
 PREFIX    ?= /usr/local
 MANPREFIX ?= $(PREFIX)/man
 DEBUG ?=
-CFLAGS += $(DEBUG) -std=c99 -Wall -lguile-3.0 -lgmp -lm
+CFLAGS += $(DEBUG) -std=c99 -Wall -lguile-3.0 -lgmp -lm -I/usr/include/guile/3.0
 
 all: bren
 

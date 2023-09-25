@@ -32,6 +32,7 @@
 #include <time.h>
 #include <libgen.h>
 #include <math.h>
+#include <libguile.h>
 
 #define VERSION "0.4"
 
@@ -175,10 +176,21 @@ static char *construct_new_filename(const char *origpath, const char *newnamepar
 
 /* Load GNU Guile script pointed by script_path.
  *
- * We look for init-bren function from the script and call it.
+ * We look for bren-bridge function from the script and call it.
  */
 static void execute_script_for_file(const char *script_path, const char *file_path) {
 
+        SCM scm_bridge_func;
+        SCM scm_file_path;
+
+        scm_init_guile();
+
+        scm_c_primitive_load(script_path);
+
+        scm_bridge_func = scm_variable_ref(scm_c_lookup("bren-bridge"));
+        scm_file_path = scm_from_locale_string(file_path);
+
+        scm_call_1(scm_bridge_func, scm_file_path);
 }
 
 /* Uses last modified date of the file as an identifier */
