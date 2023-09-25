@@ -1,7 +1,7 @@
 .\" Manpage for Bren.
 .\" Any errors or typos, contact niko@byteptr.com.
 
-.TH man 1 "21 Sep 2023" "0.4" "Bren man page"
+.TH man 1 "25 Sep 2023" "0.4" "Bren man page"
 .SH NAME
 Bren \- Bulk file renaming program for the shell
 .SH SYNOPSIS
@@ -47,7 +47,7 @@ Dry run:
 After the rename operation, execute a GNU Guile script:
        bren -p /some/path/to/dir -b "basename" -c /path/to/script.scm
 .PP
-Guile scripts must contain function init-bren(filepath).
+Guile scripts must contain function (bren-bridge(filepath))
 Bren looks for that and calls it after every file rename operation.
 Argument filepath is the path of the file that was renamed.
 .SH NOTES
