@@ -183,12 +183,10 @@ static void execute_script_for_file(const char *script_path, const char *file_pa
         SCM scm_bridge_func;
         SCM scm_file_path;
 
-        scm_init_guile();
-
         scm_c_primitive_load(script_path);
 
         scm_bridge_func = scm_variable_ref(scm_c_lookup("bren-bridge"));
-        scm_file_path = scm_from_locale_string(file_path);
+        scm_file_path = scm_from_utf8_string(file_path);
 
         scm_call_1(scm_bridge_func, scm_file_path);
 }
@@ -458,6 +456,16 @@ static void walk_path(const char *path, int fd_limit) {
         }
 }
 
+static void init_bren_defaults() {
+        _data_t.remove_ext = false;
+        _data_t.identifier = DEFAULT;
+        _data_t.file_count = 0;
+        _data_t.top_dir_only = false;
+        _data_t.execute_script = false;
+        _data_t.script_file_path = NULL;
+        _data_t.dry_run = false;
+}
+
 int main (int argc, char *argv[]) {
 
         int opt, index;
@@ -470,13 +478,7 @@ int main (int argc, char *argv[]) {
                 return 0;
         }
 
-        _data_t.remove_ext = false;
-        _data_t.identifier = DEFAULT;
-        _data_t.file_count = 0;
-        _data_t.top_dir_only = false;
-        _data_t.execute_script = false;
-        _data_t.script_file_path = NULL;
-        _data_t.dry_run = false;
+        init_bren_defaults();
 
         while ((opt = getopt(argc, argv, "p:b:c:ehDrtdV")) != -1) {
                 switch (opt) {
@@ -490,6 +492,7 @@ int main (int argc, char *argv[]) {
                         _data_t.basename = optarg;
                         break;
                 case 'c': /* Execute script point by optarg for each file */
+                        scm_init_guile();
                         _data_t.execute_script = true;
                         _data_t.script_file_path = optarg;
                         break;
@@ -532,7 +535,6 @@ int main (int argc, char *argv[]) {
                         usage();
                         return 0;
                 }
-
         }
 
         for (index = optind; index < argc; index++)
