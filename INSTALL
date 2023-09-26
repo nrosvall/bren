@@ -1,0 +1,16 @@
+How to install Bren from the source code
+
+    To compile and install Bren, you will need a fairly modern
+    C compiler which supports C99 standard. You will also
+    need GNU Make program.
+
+    Bren also needs GNU Guile development files installed.
+    For example on Fedora you would install them by using command:
+    dnf install guile30 guile30-devel
+
+    1) Extract the source code archive e.g bren-0.4.tar.gz
+    2) Move to the Bren source code directory
+    3) Type make. This will compile binary "bren".
+    4) Type sudo make install. This will install bren to
+    /usr/local/bin and bren.1 manpage to /usr/local/share/man/man1/bren.1.gz
+    5) Run bren from terminal.
