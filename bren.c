@@ -543,7 +543,6 @@ int main (int argc, char *argv[]) {
         if (path == NULL) {
                 fprintf(stderr, "Path (-p) is not set. Abort. See -h for help.\n");
                 return 0;
-
         }
 
         if (!is_dir(path)) {
