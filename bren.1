@@ -56,6 +56,13 @@ new filename that is unique to each file. For example if
 a directory contains files img656.jpg and img343.jpg,
 running bren -p /path/to/the/directory -b "myphoto"
 would rename the files to myphoto(1).jpg and myphoto(2).jpg.
+
+When using -d option, please note that it uses file's last
+modified date in format %Y-%m-%dT%H:%M:%S. It's possible
+that some of the files you want to rename will have the same
+last modified date. If that happens, only the first file
+will be renamed and rest of them with the same date will
+be skipped.
 .SH AUTHORS
 Written by Niko Rosvall.
 .SH COPYRIGHT
